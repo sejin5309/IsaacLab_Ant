@@ -3,9 +3,9 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ant-rough-e8a"
-version = "1.0.0"
-description = "Minimal IsaacLab E8A Ant inference and assignment evaluation"
+name = "ant-rough"
+version = "1.1.0"
+description = "Minimal IsaacLab Ant rough-terrain Ant inference and assignment evaluation"
 requires-python = ">=3.11"
 
 [tool.setuptools.packages.find]
