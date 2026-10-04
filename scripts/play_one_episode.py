@@ -1,6 +1,6 @@
 # Copyright (c) 2022-2025, The Isaac Lab Project Developers.
 # SPDX-License-Identifier: BSD-3-Clause
-"""Portable E8A playback; first-episode accounting follows IsaacLab's assignment runner."""
+"""Portable Ant rough-terrain playback; first-episode accounting follows IsaacLab's assignment runner."""
 
 import argparse
 import hashlib
@@ -14,9 +14,9 @@ from isaaclab.app import AppLauncher
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--task", default="Isaac-Ant-Rough-E8A-SelfEval-v0",
-                    choices=["Isaac-Ant-Rough-E8A-SelfEval-v0", "Isaac-Ant-Rough-E8A-Medium-v0"])
-parser.add_argument("--checkpoint", type=Path, default=ROOT / "checkpoints/e8a_model_399.pt")
+parser.add_argument("--task", default="Isaac-Ant-Rough-SelfEval-v0",
+                    choices=["Isaac-Ant-Rough-SelfEval-v0", "Isaac-Ant-Rough-Medium-v0"])
+parser.add_argument("--checkpoint", type=Path, default=ROOT / "checkpoints/ant_rough_1000.pt")
 parser.add_argument("--seed", type=int, default=24)
 parser.add_argument("--num_envs", type=int, default=100)
 parser.add_argument("--output", type=Path, default=ROOT / "outputs/latest")
@@ -69,10 +69,12 @@ def main():
         policy = runner.get_inference_policy(device=env.unwrapped.device)
         obs = env.get_observations()
         if obs["policy"].shape[-1] != 382 or env.num_actions != 8:
-            raise RuntimeError("E8A requires exactly 382 ordered observations and 8 effort actions")
+            raise RuntimeError("Ant rough-terrain requires exactly 382 ordered observations and 8 effort actions")
         returns = torch.zeros(env.num_envs, dtype=torch.float64, device=env.device)
         lengths = torch.zeros(env.num_envs, dtype=torch.long, device=env.device)
         finished = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+        names = env.unwrapped.reward_manager.active_terms
+        components = torch.zeros((env.num_envs, len(names)), dtype=torch.float64, device=env.device)
         per_env = {}
         for _ in range(env.max_episode_length):
             if not app.is_running():
@@ -83,12 +85,17 @@ def main():
                 active = ~finished
                 returns[active] += rewards[active]
                 lengths[active] += 1
+                contributions = env.unwrapped.reward_manager._step_reward.double() * env.unwrapped.step_dt
+                if not torch.allclose(contributions.sum(dim=1), rewards.double(), atol=1e-5, rtol=1e-5):
+                    raise RuntimeError("Reward component accounting mismatch")
+                components[active] += contributions[active]
                 newly_finished = active & dones.bool()
                 manager = env.unwrapped.termination_manager
                 monitor = env.unwrapped.locomotion_monitor
                 for idx in newly_finished.nonzero(as_tuple=False).flatten().tolist():
                     per_env[str(idx)] = {
                         "return": returns[idx].item(), "steps": lengths[idx].item(),
+                        "reward_components": dict(zip(names, components[idx].tolist())),
                         "failure": bool(manager.get_term("body_orientation")[idx].item()),
                         "boundary_exit": bool(manager.get_term("map_boundary")[idx].item()),
                         "time_out": bool(manager.get_term("time_out")[idx].item()),
@@ -111,6 +118,8 @@ def main():
             "steps_std_population": lengths.double().std(unbiased=False).item(),
             "failure_count": sum(row["failure"] for row in per_env.values()),
             "boundary_exit_count": sum(row["boundary_exit"] for row in per_env.values()),
+            "reward_component_means": dict(zip(names, components.mean(dim=0).tolist())),
+            "max_component_sum_error": (components.sum(dim=1) - returns).abs().max().item(),
             "per_env": per_env,
         }
         (args.output / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
