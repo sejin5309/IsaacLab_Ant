@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-04",
+  "check": "Standalone package replay on the original validation machine",
+  "complete": true,
+  "num_envs": 100,
+  "seed": 24,
+  "terrain_seed": 71,
+  "max_per_episode_return_difference": 0.0,
+  "aggregate_absolute_tolerance": 1e-12,
+  "checkpoint_sha256": "ab14a0c545bd7b957b3fa44935b9e262f036c1f33d34ddd366204870687d58aa",
+  "return_mean": 34.618545378395936,
+  "return_std_population": 3.3169810645023357,
+  "steps_mean": 956.63,
+  "steps_std_population": 23.613832810452443,
+  "failure_count": 1,
+  "boundary_exit_count": 1,
+  "note": "A packaging equivalence check, not an additional independent generalization sample. Cross-hardware bitwise reproducibility is not guaranteed."
+}
