@@ -1,0 +1,9 @@
+{
+  "root": true,
+  "joint_pos": true,
+  "joint_vel": true,
+  "origins": true,
+  "observations": true,
+  "materials": true,
+  "all_episode_lengths_and_terminations_and_displacements_equal": true
+}

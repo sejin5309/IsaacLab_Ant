@@ -1,0 +1,29 @@
+{
+  "name": "Ant Rough Terrain",
+  "file": "checkpoints/ant_rough_1000.pt",
+  "sha256": "5fd3a893a7913c0aa82a0785f95bc31305c89128db7045b136cf6c83d18e2d93",
+  "saved_iteration": 999,
+  "completed_updates_in_this_training_phase": 1000,
+  "resume": {
+    "from_completed_updates": 400,
+    "additional_updates": 600,
+    "optimizer_and_adaptive_learning_rate_restored": true
+  },
+  "num_envs": 4096,
+  "rollout_steps": 32,
+  "training_seed": 42,
+  "terrain_seed": 42,
+  "training_target_speed_mps": 2.0,
+  "policy_observations": 382,
+  "policy_actions": 8,
+  "action_type": "joint effort",
+  "action_scale": 7.5,
+  "normalization": false,
+  "actor_hidden_dims": [
+    400,
+    200,
+    100
+  ],
+  "activation": "elu",
+  "note": "Continuation model; this update count does not erase preceding warm-start ancestry."
+}
